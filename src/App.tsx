@@ -270,6 +270,7 @@ function App() {
   const [lastJudgment, setLastJudgment] = useState('Ready')
   const [difficulty, setDifficulty] = useState<Difficulty>('normal')
   const [noteSpeed, setNoteSpeed] = useState<NoteSpeed>('normal')
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const threeStageRef = useRef<HTMLDivElement | null>(null)
@@ -330,6 +331,16 @@ function App() {
   }, [currentTime])
 
   useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement))
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () =>
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
+  useEffect(() => {
     return () => {
       if (objectUrlRef.current) {
         URL.revokeObjectURL(objectUrlRef.current)
@@ -350,6 +361,30 @@ function App() {
     setGameStats((stats) => applyJudgment(stats, result))
     setLastJudgment(result.toUpperCase())
   }, [])
+
+  const hitLane = useCallback((lane: number) => {
+    if (gameStatusRef.current !== 'playing') {
+      return
+    }
+
+    const time = currentTimeRef.current
+    const candidate = notesRef.current
+      .filter((note) => note.lane === lane && !noteResultsRef.current[note.id])
+      .map((note) => ({
+        note,
+        offset: Math.abs(note.time - time),
+      }))
+      .filter(({ offset }) => offset <= hitWindow)
+      .sort((a, b) => a.offset - b.offset)[0]
+
+    if (!candidate) {
+      setLastJudgment('MISS')
+      setGameStats((stats) => applyJudgment(stats, 'miss'))
+      return
+    }
+
+    markNote(candidate.note.id, resultFromOffset(candidate.offset, hitWindow))
+  }, [hitWindow, markNote])
 
   useEffect(() => {
     if (!isPlaying) {
@@ -392,28 +427,12 @@ function App() {
       }
 
       event.preventDefault()
-      const time = currentTimeRef.current
-      const candidate = notesRef.current
-        .filter((note) => note.lane === lane && !noteResultsRef.current[note.id])
-        .map((note) => ({
-          note,
-          offset: Math.abs(note.time - time),
-        }))
-        .filter(({ offset }) => offset <= hitWindow)
-        .sort((a, b) => a.offset - b.offset)[0]
-
-      if (!candidate) {
-        setLastJudgment('MISS')
-        setGameStats((stats) => applyJudgment(stats, 'miss'))
-        return
-      }
-
-      markNote(candidate.note.id, resultFromOffset(candidate.offset, hitWindow))
+      hitLane(lane)
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [hitWindow, markNote])
+  }, [hitLane])
 
   useEffect(() => {
     const mount = threeStageRef.current
@@ -790,13 +809,16 @@ function App() {
     setGameStatus('ready')
   }
 
-  function fullScreenGame() {
-    const targetElement = document.getElementById('waveform-panel');
-    if (!targetElement) return;
+  async function fullScreenGame() {
+    const targetElement = document.getElementById('waveform-panel')
+    if (!targetElement) {
+      return
+    }
+
     if (!document.fullscreenElement) {
-      targetElement.requestFullscreen();
+      await targetElement.requestFullscreen()
     } else {
-      document.exitFullscreen();
+      await document.exitFullscreen()
     }
   }
 
@@ -824,6 +846,22 @@ function App() {
     const nextTime = clamp((event.clientX - rect.left) / rect.width, 0, 1) * duration
     audioRef.current.currentTime = nextTime
     setCurrentTime(nextTime)
+  }
+
+  function hitLaneFromPointer(event: React.PointerEvent<HTMLDivElement>) {
+    if (mode !== 'play' || gameStatus !== 'playing') {
+      return
+    }
+
+    event.preventDefault()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    const rect = event.currentTarget.getBoundingClientRect()
+    const lane = clamp(
+      Math.floor(((event.clientX - rect.left) / rect.width) * laneLabels.length),
+      0,
+      laneLabels.length - 1,
+    )
+    hitLane(lane)
   }
 
   function exportChart() {
@@ -901,12 +939,22 @@ function App() {
           </div>
 
           {mode === 'play' ? (
-            <div className="game-stage-wrap">
+            <div
+              className="game-stage-wrap"
+              onPointerDown={hitLaneFromPointer}
+              role="application"
+              tabIndex={0}
+            >
               <div
                 ref={threeStageRef}
                 className="game-stage"
                 aria-label="3Dゲームレーン"
               />
+              <div className="score-overlay" aria-live="polite">
+                <span>{gameStatus === 'finished' ? 'Result' : lastJudgment}</span>
+                <strong>{gameStats.score.toLocaleString()}</strong>
+                <p>{gameStats.combo} combo</p>
+              </div>
               <div className="lane-label-overlay" aria-hidden="true">
                 {laneLabels.map((label) => (
                   <span key={label}>{label}</span>
@@ -966,7 +1014,7 @@ function App() {
               停止
             </button>
             <button type="button" onClick={fullScreenGame}>
-              {document.fullscreenElement ? "フルスクリーンの解除" : "フルスクリーン化"}
+              {isFullscreen ? "フルスクリーンの解除" : "フルスクリーン化"}
             </button>
             <span>A / S / K / L でノーツを叩く</span>
           </div>

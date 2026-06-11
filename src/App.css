@@ -91,6 +91,15 @@ button:disabled {
   color: #dbe6ef;
 }
 
+.waveform-panel:fullscreen {
+  inline-size: 100vw;
+  block-size: 100vh;
+  border: 0;
+  border-radius: 0;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
 .play-panel h2,
 .play-panel .transport,
 .play-panel .game-actions span {
@@ -172,6 +181,26 @@ button:disabled {
   overflow: hidden;
   border-radius: 8px;
   background: #101820;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.game-stage-wrap:focus-visible {
+  outline: 2px solid #f1c84b;
+  outline-offset: 3px;
+}
+
+.waveform-panel:fullscreen .game-stage-wrap {
+  flex: 1;
+  block-size: auto;
+  min-block-size: 0;
+}
+
+.waveform-panel:fullscreen .panel-header,
+.waveform-panel:fullscreen .play-settings,
+.waveform-panel:fullscreen .game-actions {
+  flex-shrink: 0;
 }
 
 .game-stage {
@@ -183,6 +212,45 @@ button:disabled {
   display: block;
   inline-size: 100%;
   block-size: 100%;
+}
+
+.score-overlay {
+  pointer-events: none;
+  position: absolute;
+  inset-block-start: 16px;
+  inset-inline-start: 16px;
+  min-inline-size: 168px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: white;
+  background: rgba(16, 24, 32, 0.72);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.score-overlay span {
+  display: block;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.score-overlay strong {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 30px;
+  line-height: 1;
+}
+
+.score-overlay p {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-family: var(--mono);
+  font-size: 13px;
 }
 
 .lane-label-overlay {
