@@ -1,0 +1,73 @@
+:root {
+  --text: #485261;
+  --text-h: #101820;
+  --muted: #6f7a86;
+  --bg: #eef2f5;
+  --panel: #ffffff;
+  --surface: #f8fafb;
+  --border: #d8e0e7;
+  --accent: #0d7480;
+  --button-bg: #101820;
+  --button-border: #101820;
+  --button-text: #ffffff;
+  --shadow: 0 18px 50px rgba(20, 31, 43, 0.08);
+  --sans: Inter, ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+
+  font: 16px/1.5 var(--sans);
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1,
+h2 {
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 42px;
+  line-height: 1.02;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+h2 {
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: 30px;
+  }
+}
